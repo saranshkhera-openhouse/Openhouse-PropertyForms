@@ -1,0 +1,31 @@
+const express=require('express'),router=express.Router();
+module.exports=function(pool){
+  router.get('/prefill/:uid',async(req,res)=>{
+    try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      if(!rows[0].final_submitted_at)return res.status(400).json({error:'Form 5 (PG Receipt) must be submitted first'});
+      res.json(rows[0])}catch(e){res.status(500).json({error:e.message})}
+  });
+  router.get('/uids',async(_,res)=>{
+    try{const{rows}=await pool.query(`SELECT uid,city,society_name,unit_no,tower_no,owner_broker_name,final_submitted_at,listing_submitted_at
+      FROM properties WHERE final_submitted_at IS NOT NULL ORDER BY created_at DESC`);res.json(rows)}catch(e){res.status(500).json({error:e.message})}
+  });
+  router.post('/submit',async(req,res)=>{
+    try{
+      const d=req.body;const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      await pool.query(`UPDATE properties SET
+        society_age_years=$1,maintenance_charges=$2,society_move_in_charges=$3,
+        electricity_charges=$4,water_supply=$5,dg_charges=$6,alpha_beta=$7,
+        loan_status=$8,seller_location=$9,circle_rate=$10,parking_number=$11,
+        beta_pct=$12,outstanding_loan=$13,
+        listing_submitted_at=NOW(),updated_at=NOW() WHERE uid=$14`,
+        [parseFloat(d.society_age_years)||null,parseFloat(d.maintenance_charges)||null,parseFloat(d.society_move_in_charges)||null,
+         parseFloat(d.electricity_charges)||null,d.water_supply||null,parseFloat(d.dg_charges)||null,d.alpha_beta||null,
+         d.loan_status||null,d.seller_location||null,parseFloat(d.circle_rate)||null,d.parking_number||null,
+         parseFloat(d.beta_pct)||null,parseFloat(d.loan_amount)||null,d.uid]);
+      res.json({success:true,uid:d.uid});
+    }catch(e){console.error('Listing:',e);res.status(500).json({error:e.message})}
+  });
+  return router;
+};
