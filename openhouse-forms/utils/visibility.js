@@ -9,7 +9,7 @@ const EMAIL_TO_NAMES = {
   'arti.ahirwar@openhouse.in': ['Arti Ahirwar'],
   'abhishek.rathore@openhouse.in': ['Abhishek Rathore'],
   'animesh.singh@openhouse.in': ['Animesh Singh'],
-  'apurv.nath@openhouse.in': ['Apurba Nath'],
+  'apurv.nath@openhouse.in': ['Apurv Nath'],
   'kavita.rawat@openhouse.in': ['Kavita Rawat'],
   'prashant@openhouse.in': ['Prashant'],
   'rahool@openhouse.in': ['Rahool'],
@@ -24,12 +24,13 @@ const EMAIL_TO_NAMES = {
   'ankit@openhouse.in': ['Ankit'],
   'vaibhav.dwivedi@openhouse.in': ['Vaibhav Dwivedi'],
   'aman.dixit@openhouse.in': ['Aman Dixit'],
-  'durejasahaj@gmail.com': ['Testing_Sahaj']
+  'durejasahaj@gmail.com': ['Testing_Sahaj'],
+  'deepak.mishra@openhoue.in':['Deepak Mishra']
 };
 
 // Manager email → array of team member display names
 const TEAMS = {
-  'apurv.nath@openhouse.in': ['Sushmita Roy'],
+  
   'sahaj.dureja@openhouse.in': ['Shashank Kumar', 'Rupali Prasad']
 };
 
@@ -85,4 +86,8 @@ function visibilityFilter(user, paramOffset = 0) {
   };
 }
 
-module.exports = { EMAIL_TO_NAMES, TEAMS, getVisibleNames, visibilityFilter };
+function uidFilter(user, paramOffset = 0) {
+  const vis = visibilityFilter(user, paramOffset);
+  return { clause: ' AND (is_dead IS NOT TRUE)' + vis.clause, params: vis.params };
+}
+module.exports = { EMAIL_TO_NAMES, TEAMS, getVisibleNames, visibilityFilter, uidFilter };

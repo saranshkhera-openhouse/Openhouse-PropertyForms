@@ -163,5 +163,3 @@ openhouse-forms/
 | `/api/token/submit` | POST | Submit token form |
 | `/api/token/pdf/:uid` | GET | Download token PDF |
 | `/api/properties` | GET | Admin: all properties |
-
-<!-- saransh bhondu -->
