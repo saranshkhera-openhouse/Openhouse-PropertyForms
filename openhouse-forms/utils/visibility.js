@@ -24,14 +24,17 @@ const EMAIL_TO_NAMES = {
   'ankit@openhouse.in': ['Ankit'],
   'vaibhav.dwivedi@openhouse.in': ['Vaibhav Dwivedi'],
   'aman.dixit@openhouse.in': ['Aman Dixit'],
-  'durejasahaj@gmail.com': ['Testing_Sahaj'],
-  'deepak.mishra@openhoue.in':['Deepak Mishra']
+  'deepak.mishra@openhoue.in':['Deepak Mishra'],
+  'nisha.deewan@openhouse.in':['Nisha Deewan'],
+  'ashwani.sharma@openhouse.in':['Ashwani Sharma']
 };
 
 // Manager email → array of team member display names
 const TEAMS = {
   
-  'sahaj.dureja@openhouse.in': ['Shashank Kumar', 'Rupali Prasad']
+  'abhishek.rathore@openhouse.in' : ['Aman Dixit','Arti Ahirwar','Kavita Rawat','Sahil Singh'],
+  'animesh.singh@openhouse.in': ['Nishant Kumar','Rahul Sheel','Sushmita Roy'],
+  'ashish@openhouse.in': ['Aman Dixit','Sahil Singh']
 };
 
 /**

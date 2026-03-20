@@ -1,5 +1,6 @@
 const express=require('express'),router=express.Router();
 const{visibilityFilter}=require('../utils/visibility');
+const{notifyVisitCompleted,notifyVisitReassigned,notifyVisitCancelled}=require('../utils/whatsapp');
 module.exports=function(pool){
   router.get('/prefill/:uid',async(req,res)=>{
     try{const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
@@ -29,16 +30,36 @@ module.exports=function(pool){
          d.exit_facing||null,d.exit_compass_image||null,d.video_link||null,
          d.balcony_details||'[]',d.additional_images||'[]',d.visit_remarks||null,d.uid]);
       res.json({success:true,uid:d.uid});
+      // Fire-and-forget WhatsApp notification to assigned_by
+      pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
+        if(rows[0])notifyVisitCompleted(rows[0]).catch(e=>console.error('WA visit notify error:',e));
+      }).catch(e=>console.error('WA visit fetch error:',e));
     }catch(e){console.error('Visit:',e);res.status(500).json({error:e.message})}
   });
   // Mark UID as dead
   router.post('/dead/:uid',async(req,res)=>{
     try{
-      const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[req.params.uid]);
+      const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query('UPDATE properties SET is_dead=TRUE,updated_at=NOW() WHERE uid=$1',[req.params.uid]);
       res.json({success:true,uid:req.params.uid});
+      // Notify assigned_by that visit is cancelled
+      const cancelledBy=req.user?.name||req.user?.email||'Unknown';
+      notifyVisitCancelled(rows[0],cancelledBy).catch(e=>console.error('WA cancel notify error:',e));
     }catch(e){console.error('Dead:',e);res.status(500).json({error:e.message})}
+  });
+  // Re-assign field_exec
+  router.post('/reassign/:uid',async(req,res)=>{
+    try{
+      const{field_exec}=req.body;
+      if(!field_exec)return res.status(400).json({error:'Select a person'});
+      const{rows}=await pool.query('SELECT * FROM properties WHERE uid=$1',[req.params.uid]);
+      if(!rows.length)return res.status(404).json({error:'UID not found'});
+      await pool.query('UPDATE properties SET field_exec=$1,updated_at=NOW() WHERE uid=$2',[field_exec,req.params.uid]);
+      res.json({success:true,uid:req.params.uid,field_exec});
+      // Notify new assignee
+      notifyVisitReassigned(rows[0],field_exec).catch(e=>console.error('WA reassign notify error:',e));
+    }catch(e){console.error('Reassign:',e);res.status(500).json({error:e.message})}
   });
   return router;
 };
