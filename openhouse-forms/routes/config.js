@@ -12,12 +12,12 @@ module.exports=function(pool){
     balconyViews:["Road","Club","Garden","Park/Playground","Swimming Pool","Open Area","Other Building","Tower","N/A"],
     balconyAttach:["Master Bedroom","2nd Bedroom","3rd Bedroom","Living Room","Kitchen"],
     documentsAvailable:["  Allotment Letter issued by the Builder","  Possession Letter/Certificate by the Builder","  Builder Buyer Agreement","  Conveyance Deed/Sale Deed/Registry","  Other Documents"],
-    banks:["Au Small Finance Bank Ltd.","Axis Bank Ltd.","Bandhan Bank Ltd.","Bank of Baroda","Bank of India","Bank of Maharashtra","Canara Bank","Central Bank of India","City Union Bank Ltd.","CSB Bank Limited","DCB Bank Ltd.","Dhanlaxmi Bank Ltd.","Federal Bank Ltd.","HDFC Bank Ltd","ICICI Bank Ltd.","IDBI Bank Limited","IDFC FIRST Bank Limited","Indian Bank","Indian Overseas Bank","IndusInd Bank Ltd","Jammu & Kashmir Bank Ltd.","Karnataka Bank Ltd.","Karur Vysya Bank Ltd.","Kotak Mahindra Bank Ltd","Nainital bank Ltd.","Punjab & Sind Bank","Punjab National Bank","RBL Bank Ltd.","South Indian Bank Ltd.","State Bank of India","Tamilnad Mercantile Bank Ltd.","UCO Bank","Union Bank of India","YES Bank Ltd."],
+    banks:["Au Small Finance Bank Ltd.","Axis Bank Ltd.","Bandhan Bank Ltd.","Bank of Baroda","Bank of India","Bank of Maharashtra","Canara Bank","Central Bank of India","City Union Bank Ltd.","CSB Bank Limited","DCB Bank Ltd.","Dhanlaxmi Bank Ltd.","Federal Bank Ltd.","HDFC Bank Ltd","HSBC India","ICICI Bank Ltd.","IDBI Bank Limited","IDFC FIRST Bank Limited","Indian Bank","Indian Overseas Bank","IndusInd Bank Ltd","Jammu & Kashmir Bank Ltd.","Karnataka Bank Ltd.","Karur Vysya Bank Ltd.","Kotak Mahindra Bank Ltd","Nainital bank Ltd.","Punjab & Sind Bank","Punjab National Bank","RBL Bank Ltd.","South Indian Bank Ltd.","State Bank of India","Tamilnad Mercantile Bank Ltd.","UCO Bank","Union Bank of India","YES Bank Ltd."],
     yesNo:["Yes","No"],
     cityMap:{"Gurgaon":"G","Noida":"N","Ghaziabad":"GH"},
     sourceMap:{"CP":"C","Direct":"D"},
     assignedByList: ["Abhishek Rathore", "Aman Dixit", "Animesh Singh", "Apurv Nath", "Arti Ahirwar","Deepak Mishra", "Kavita Rawat", "Prateek Shrivastava","Nisha Deewan", "Rahul Sheel", "Rupali Prasad", "Sahil Singh", "Shashank Kumar", "Sushmita Roy", "Vaibhav Dwivedi","Test Sahaj"],
-    assignedToList: ["Aman Dixit" , "Animesh Singh","Ashwani Sharma","Deepak Mishra","Nishant Singh", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Vaibhav Dwivedi","Test Sahaj"]
+    assignedToList: ["Aman Dixit" , "Animesh Singh","Ashwani Sharma","Deepak Mishra","Nishant Kumar", "Praveen Kumar", "Rahul Sheel", "Rahul Singh", "Sahil Singh","Vaibhav Dwivedi","Test Sahaj"]
   };
   router.get('/',(_,r)=>r.json({options:OPT}));
   router.get('/cloudinary',(_,r)=>r.json({cloudName:process.env.CLOUDINARY_CLOUD_NAME||'',uploadPreset:process.env.CLOUDINARY_UPLOAD_PRESET||''}));
