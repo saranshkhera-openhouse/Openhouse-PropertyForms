@@ -18,6 +18,7 @@ module.exports=function(pool){
       const{rows}=await pool.query('SELECT uid FROM properties WHERE uid=$1',[d.uid]);
       if(!rows.length)return res.status(404).json({error:'UID not found'});
       await pool.query(`UPDATE properties SET
+        unit_no=$27,tower_no=$28,floor=$29,area_sqft=$30,demand_price=$31,
         token_requested_by=$1,token_amount_requested=$2,
         cheque_image_url=$3,cheque_bank_name=$4,cheque_account_number=$5,cheque_ifsc=$6,
         registry_status=$7,occupancy_status=$8,key_handover_date=$9,
@@ -26,7 +27,7 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
-        has_loan=$24,token_remarks_printed=$25,
+        has_loan=$24,token_remarks_printed=$25,co_owner=$26,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -37,14 +38,9 @@ module.exports=function(pool){
          parseInt(d.grace_period)||null,d.rent_payable_grace_period||null,
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
-         d.has_loan||'No',d.token_remarks_printed||null]);
+         d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null,
+         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
-      // Fire-and-forget WhatsApp notification (only on actual submit, not draft)
-      if(!isDraft){
-        pool.query('SELECT * FROM properties WHERE uid=$1',[d.uid]).then(({rows})=>{
-          if(rows[0])notifyTokenRequest(rows[0]).catch(e=>console.error('WA token notify error:',e));
-        }).catch(e=>console.error('WA token fetch error:',e));
-      }
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)
@@ -89,6 +85,8 @@ module.exports=function(pool){
       });
       console.log(`Email sent for ${req.params.uid} by ${user.email} — msgId: ${result.messageId}`);
       res.json({success:true,messageId:result.messageId});
+      // Fire-and-forget WhatsApp notification after email sent
+      notifyTokenRequest(pRows[0]).catch(e=>console.error('WA token notify error:',e));
     }catch(e){
       console.error('SendEmail:',e);
       if(e.message?.includes('invalid_grant')||e.message?.includes('Token has been expired')||e.code===401){
