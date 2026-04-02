@@ -11,6 +11,9 @@
 .pu-item.uploaded .pu-label{color:var(--grn)}
 .pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
 .pu-item input[type=file]{display:none}
+.pu-item.missing{border-color:var(--red);background:#fef2f2}
+.pu-item.missing .pu-icon{color:var(--red)}
+.pu-item.missing .pu-label{color:var(--red)}
 .email-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .email-overlay.open{display:flex}
 .email-box{background:var(--sf);border-radius:12px;width:100%;max-width:640px;margin:40px auto;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
@@ -83,26 +86,26 @@
     </div>
 
     <div class="card">
-      <div class="card-t">Documents Upload for CP</div>
+      <div class="card-t">Documents Upload for CP <span class="req">*</span></div>
       <div class="photo-upload">
         <div class="pu-item" id="pu_aadhaarFront" onclick="pickFile('cp_aadhaar_front')">
-          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_front" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_front')">
         </div>
         <div class="pu-item" id="pu_aadhaarBack" onclick="pickFile('cp_aadhaar_back')">
-          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back <span class="req">*</span></div>
           <input type="file" id="fi_cp_aadhaar_back" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_aadhaar_back')">
         </div>
         <div class="pu-item" id="pu_pan" onclick="pickFile('cp_pan_card')">
-          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card <span class="req">*</span></div>
           <input type="file" id="fi_cp_pan_card" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_pan_card')">
         </div>
         <div class="pu-item" id="pu_cheque" onclick="pickFile('cp_cancelled_cheque')">
-          <div class="pu-icon">📄</div><div class="pu-label">Cancelled Cheque</div>
+          <div class="pu-icon">📄</div><div class="pu-label">Cancelled Cheque <span class="req">*</span></div>
           <input type="file" id="fi_cp_cancelled_cheque" accept="image/*,.pdf" onchange="uploadDoc(this,'cp_cancelled_cheque')">
         </div>
         <div class="pu-item" id="pu_ama" onclick="pickFile('cp_ama_signed')" style="grid-column:span 2">
-          <div class="pu-icon">📄</div><div class="pu-label">AMA Signed (PDF)</div>
+          <div class="pu-icon">📄</div><div class="pu-label">AMA Signed (PDF) <span class="req">*</span></div>
           <input type="file" id="fi_cp_ama_signed" accept=".pdf,application/pdf" onchange="uploadDoc(this,'cp_ama_signed')">
         </div>
       </div>
@@ -218,7 +221,7 @@ async function loadUID(uid){
     for(const[key,col]of Object.entries(DOC_MAP)){
       docUrls[key]=d[col]||'';
       const item=document.getElementById(ITEM_MAP[key]);
-      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').textContent+=' ✓';
+      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').innerHTML+=' ✓';
         const link=item.querySelector('.pu-link');if(!link){const a=document.createElement('a');a.className='pu-link';a.href=d[col];a.target='_blank';a.textContent='View';a.onclick=e=>e.stopPropagation();item.appendChild(a)}}
     }
     document.getElementById('cpBillForm').style.display='block';
@@ -236,12 +239,12 @@ async function uploadDoc(input,key){
     const fd=new FormData();fd.append('file',file);fd.append('upload_preset',cloudCfg.uploadPreset);fd.append('folder','cp-bill');
     const r=await fetch(`https://api.cloudinary.com/v1_1/${cloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
     const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
-    docUrls[key]=d.secure_url;item.classList.add('uploaded');
+    docUrls[key]=d.secure_url;item.classList.add('uploaded');item.classList.remove('missing');
     const labelMap={cp_aadhaar_front:'Aadhaar Front ✓',cp_aadhaar_back:'Aadhaar Back ✓',cp_pan_card:'PAN Card ✓',cp_cancelled_cheque:'Cheque ✓',cp_ama_signed:'AMA Signed ✓'};
-    item.querySelector('.pu-label').textContent=labelMap[key]||'Uploaded ✓';
+    item.querySelector('.pu-label').innerHTML=(labelMap[key]||'Uploaded ✓')+' <span class="req">*</span>';
     let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
     link.href=d.secure_url;toast('Uploaded','ok');
-  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=key.replace(/cp_/,'').replace(/_/g,' ')}
+  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').innerHTML=key.replace(/cp_/,'').replace(/_/g,' ')+' <span class="req">*</span>'}
 }
 
 function validatePhone(val){return /^[1-9]\d{9}$/.test(val)}
@@ -275,6 +278,16 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   if(!body.agreed_brokerage){toast('Agreed Brokerage % required','err');return}
   if(!body.total_brokerage_amount){toast('Total Brokerage required','err');return}
   if(!body.to_be_released_now){toast('To be Released Now required','err');return}
+
+  // Validate all documents are uploaded
+  const DOC_LABELS={cp_aadhaar_front:'Aadhaar Front',cp_aadhaar_back:'Aadhaar Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque',cp_ama_signed:'AMA Signed'};
+  const missingDocs=[];
+  // Clear previous missing highlights
+  Object.values(ITEM_MAP).forEach(id=>document.getElementById(id).classList.remove('missing'));
+  for(const[key,label]of Object.entries(DOC_LABELS)){
+    if(!docUrls[key]){missingDocs.push(label);document.getElementById(ITEM_MAP[key]).classList.add('missing')}
+  }
+  if(missingDocs.length){toast(`Upload required: ${missingDocs.join(', ')}`,'err');return}
 
   submitBtn(document.getElementById('submitBtn'),async()=>{
     const r=await fetch(`${API}/api/cp-bill/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
