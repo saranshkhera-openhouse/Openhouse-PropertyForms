@@ -22,6 +22,20 @@
 .email-ftr{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
 .calc-hint{font-size:9px;color:var(--tx3);margin-top:2px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.cp-toggle{display:flex;gap:0;border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.cp-toggle button{flex:1;padding:10px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--sf);color:var(--tx2);font-family:var(--font);transition:.15s}
+.cp-toggle button.active{background:var(--ac);color:#fff}
+.cp-code-display{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ac);padding:6px 10px;background:#f0f4ff;border-radius:var(--r);text-align:center;border:1.5px solid var(--ac2);margin-bottom:10px}
+.cp-search-wrap{position:relative;margin-bottom:10px}
+.cp-search-results{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--sf);border:1.5px solid var(--bd);border-top:none;border-radius:0 0 var(--r) var(--r);box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:50;display:none}
+.cp-search-results.open{display:block}
+.cp-sr-item{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--bd);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.cp-sr-item:hover{background:var(--bg)}
+.cp-sr-item:last-child{border-bottom:none}
+.cp-sr-code{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ac2)}
+.cp-sr-name{font-weight:600}
+.cp-sr-detail{font-size:10px;color:var(--tx3)}
+.cp-imported-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600;background:#e0f2fe;color:#0369a1;margin-left:6px}
 </style>
 </head>
 <body>
@@ -52,6 +66,16 @@
 
     <div class="card">
       <div class="card-t">CP Details</div>
+      <div class="cp-toggle">
+        <button type="button" id="cpNewBtn" class="active" onclick="setCpMode('new')">+ New CP</button>
+        <button type="button" id="cpExistBtn" onclick="setCpMode('existing')">🔍 Existing CP</button>
+      </div>
+      <div id="cpCodeWrap" class="cp-code-display" style="display:none"></div>
+      <div id="cpSearchWrap" class="cp-search-wrap" style="display:none">
+        <input type="text" id="cpSearchInput" placeholder="🔍 Search by name, phone, code or firm..." style="font-size:14px" autocomplete="off">
+        <div class="cp-search-results" id="cpSearchResults"></div>
+      </div>
+      <input type="hidden" id="cpMasterId" value="">
       <div class="r2">
         <div class="fg"><label>CP Name <span class="req">*</span></label><input type="text" name="cp_name" id="f_cpName" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>CP Phone <span class="req">*</span></label><input type="tel" name="cp_phone" id="f_cpPhone" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^1-9]/g,'').slice(0,1)+this.value.slice(1).replace(/\D/g,'').slice(0,9)" required><div class="err-msg">Required (10 digits, no leading 0)</div></div>
@@ -136,6 +160,101 @@ const ITEM_MAP={cp_aadhaar_front:'pu_aadhaarFront',cp_aadhaar_back:'pu_aadhaarBa
 let cloudCfg=null;
 fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>cloudCfg=c).catch(()=>{});
 
+// ══ CP Mode: New vs Existing ══
+let cpMode='new',cpCode='',cpMasterId=null,searchTimeout=null;
+
+async function setCpMode(mode){
+  cpMode=mode;cpMasterId=null;
+  document.getElementById('cpMasterId').value='';
+  document.getElementById('cpNewBtn').classList.toggle('active',mode==='new');
+  document.getElementById('cpExistBtn').classList.toggle('active',mode==='existing');
+  document.getElementById('cpSearchWrap').style.display=mode==='existing'?'block':'none';
+  document.getElementById('cpSearchInput').value='';
+  document.getElementById('cpSearchResults').classList.remove('open');
+  if(mode==='new'){
+    // Auto-generate next code
+    try{const r=await fetch(`${API}/api/cp-bill/cp-master/next-code`);const d=await r.json();cpCode=d.cp_code;
+      document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').textContent=cpCode;
+    }catch(e){cpCode=''}
+    // Clear fields for new CP
+    document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
+    document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
+  }else{
+    document.getElementById('cpCodeWrap').style.display='none';cpCode='';
+    document.getElementById('f_cpName').value='';document.getElementById('f_cpPhone').value='';
+    document.getElementById('f_cpFirm').value='';document.getElementById('f_cpEmail').value='';
+    resetDocUploads(['cp_aadhaar_front','cp_aadhaar_back','cp_pan_card','cp_cancelled_cheque']);
+    document.getElementById('cpSearchInput').focus();
+  }
+}
+
+function resetDocUploads(keys){
+  keys.forEach(key=>{
+    docUrls[key]='';
+    const item=document.getElementById(ITEM_MAP[key]);
+    item.classList.remove('uploaded','missing');
+    const origLabels={cp_aadhaar_front:'Aadhaar Card Front',cp_aadhaar_back:'Aadhaar Card Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque'};
+    item.querySelector('.pu-label').innerHTML=(origLabels[key]||key)+' <span class="req">*</span>';
+    const link=item.querySelector('.pu-link');if(link)link.remove();
+    const fi=document.getElementById('fi_'+key);if(fi)fi.value='';
+  });
+}
+
+// Search existing CPs
+document.getElementById('cpSearchInput')?.addEventListener('input',function(){
+  clearTimeout(searchTimeout);
+  const q=this.value.trim();const results=document.getElementById('cpSearchResults');
+  if(q.length<2){results.classList.remove('open');return}
+  searchTimeout=setTimeout(async()=>{
+    try{
+      const r=await fetch(`${API}/api/cp-bill/cp-master/search?q=${encodeURIComponent(q)}`);
+      const data=await r.json();
+      if(!data.length){results.innerHTML='<div style="padding:10px;text-align:center;font-size:11px;color:var(--tx3)">No CPs found</div>';results.classList.add('open');return}
+      results.innerHTML=data.map(cp=>`<div class="cp-sr-item" data-id="${cp.id}">
+        <div><span class="cp-sr-name">${cp.cp_name||'—'}</span><span class="cp-sr-detail" style="margin-left:6px">${cp.cp_phone||''}</span></div>
+        <div><span class="cp-sr-code">${cp.cp_code}</span>${cp.cp_firm?`<span class="cp-sr-detail" style="margin-left:4px">${cp.cp_firm}</span>`:''}</div>
+      </div>`).join('');
+      results.classList.add('open');
+      results.querySelectorAll('.cp-sr-item').forEach(el=>el.addEventListener('click',()=>importCp(parseInt(el.dataset.id))));
+    }catch(e){console.error(e)}
+  },300);
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.cp-search-wrap'))document.getElementById('cpSearchResults')?.classList.remove('open')});
+
+async function importCp(id){
+  try{
+    const r=await fetch(`${API}/api/cp-bill/cp-master/${id}`);if(!r.ok)throw new Error('Failed');
+    const cp=await r.json();
+    cpMasterId=cp.id;cpCode=cp.cp_code;
+    document.getElementById('cpMasterId').value=cp.id;
+    document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').innerHTML=cp.cp_code+'<span class="cp-imported-badge">Imported</span>';
+    document.getElementById('f_cpName').value=cp.cp_name||'';
+    document.getElementById('f_cpPhone').value=cp.cp_phone||'';
+    document.getElementById('f_cpFirm').value=cp.cp_firm||'';
+    document.getElementById('f_cpEmail').value=cp.cp_email||'';
+    document.getElementById('cpSearchInput').value=cp.cp_name+' ('+cp.cp_code+')';
+    document.getElementById('cpSearchResults').classList.remove('open');
+    // Import docs (not AMA signed)
+    const docImport={cp_aadhaar_front:cp.cp_aadhaar_front_url,cp_aadhaar_back:cp.cp_aadhaar_back_url,cp_pan_card:cp.cp_pan_card_url,cp_cancelled_cheque:cp.cp_cancelled_cheque_url};
+    const origLabels={cp_aadhaar_front:'Aadhaar Card Front',cp_aadhaar_back:'Aadhaar Card Back',cp_pan_card:'PAN Card',cp_cancelled_cheque:'Cancelled Cheque'};
+    for(const[key,url]of Object.entries(docImport)){
+      const item=document.getElementById(ITEM_MAP[key]);
+      item.classList.remove('uploaded','missing');
+      const oldLink=item.querySelector('.pu-link');if(oldLink)oldLink.remove();
+      if(url){
+        docUrls[key]=url;item.classList.add('uploaded');
+        item.querySelector('.pu-label').innerHTML=origLabels[key]+' ✓ <span class="req">*</span>';
+        const link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.href=url;link.onclick=e=>e.stopPropagation();item.appendChild(link);
+      }else{
+        docUrls[key]='';
+        item.querySelector('.pu-label').innerHTML=origLabels[key]+' <span class="req">*</span>';
+      }
+    }
+    toast(`Imported ${cp.cp_name} (${cp.cp_code})`,'ok');
+  }catch(e){toast('Failed to load CP','err')}
+}
+
 // Brokerage bidirectional calc
 function getDV(){return parseFloat(String(document.getElementById('f_dealValue').value).replace(/,/g,''))||0}
 let bLock=false;
@@ -196,6 +315,9 @@ async function loadUID(uid){
     document.getElementById('f_cpPhone').value=d.cp_phone||'';
     document.getElementById('f_cpFirm').value=d.cp_firm||'';
     document.getElementById('f_cpEmail').value=d.cp_email||'';
+    // Restore CP code if exists
+    if(d.cp_code){cpCode=d.cp_code;document.getElementById('cpCodeWrap').style.display='block';document.getElementById('cpCodeWrap').textContent=d.cp_code}
+    else{document.getElementById('cpCodeWrap').style.display='none';cpCode=''}
     // OH Acquired Model auto-calc
     document.getElementById('f_model').value=d.oh_acquired_model||'';
     if(d.performance_guarantee&&d.guaranteed_sale_price){
@@ -254,6 +376,8 @@ document.getElementById('submitBtn').addEventListener('click',()=>{
   const cpPhone=document.getElementById('f_cpPhone').value.trim();
   if(cpPhone&&!validatePhone(cpPhone)){toast('CP Phone must be 10 digits, cannot start with 0','err');return}
   const body={uid:currentUid};
+  body.cp_code=cpCode||null;
+  body.cp_master_id=cpMasterId||null;
   body.cp_name=document.getElementById('f_cpName').value.trim();
   body.cp_phone=cpPhone;
   body.cp_firm=document.getElementById('f_cpFirm').value.trim();
