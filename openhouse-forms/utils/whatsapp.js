@@ -16,7 +16,6 @@ const NAME_TO_PHONE = {
   'Abhishek Rathore':   '9452441498',
   'Aman Dixit':         '9266533475',
   'Animesh Singh':      '9810826481',
-  'Apurv Nath':         '9891665256',
   'Arti Ahirwar':       '9289500948',
   'Kavita Rawat':       '9311338216',
   'Nisha Deewan':       '9211599292',
@@ -30,7 +29,8 @@ const NAME_TO_PHONE = {
   'Ashish':             '9555666059',
   'Saransh Khera':      '8595594789',
   'Saurabh':            '9174286625',
-  'Akash Teotia':       '9311338205'
+  'Akash Teotia':       '9311338205',
+  'Deepak Rana':        '7428500192'
 };
 
 // ═══════════════════════════════════════════════════════
