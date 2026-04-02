@@ -1,5 +1,18 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css"></head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>Openhouse — Token Request Internal</title><link rel="stylesheet" href="/css/styles.css">
+<style>
+.pu-item{border:2px dashed var(--bd);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:.15s;background:var(--bg);position:relative;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.pu-item:hover{border-color:var(--ac);background:rgba(0,0,0,.01)}
+.pu-item.uploaded{border-color:var(--grn);border-style:solid;background:#f0fdf4}
+.pu-item .pu-icon{font-size:20px;color:var(--tx3)}
+.pu-item.uploaded .pu-icon{color:var(--grn)}
+.pu-item .pu-label{font-size:10px;color:var(--tx3);font-weight:500}
+.pu-item.uploaded .pu-label{color:var(--grn)}
+.pu-item .pu-link{font-size:9px;color:var(--ac2);text-decoration:underline;margin-top:2px}
+.pu-item.missing{border-color:var(--red);background:#fef2f2}
+.pu-item.missing .pu-icon{color:var(--red)}
+.pu-item.missing .pu-label{color:var(--red)}
+</style></head>
 <body>
 <header class="hdr">
   <a href="/" class="hdr-logo"><img src="/images/logo_2.png" alt="Openhouse" style="height:32px"></a>
@@ -19,7 +32,8 @@
         <div class="fg"><label>Locality</label><input type="text" id="d_loc" class="pre" readonly></div></div>
       <div class="r2"><div class="fg"><label>Owner/Broker</label><input type="text" id="d_owner" class="pre" readonly></div>
         <div class="fg"><label>Phone</label><input type="text" id="d_phone" class="pre" readonly></div></div>
-      <div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
+      <div class="r2"><div class="fg"><label>Co-owner (if any)</label><input type="text" name="co_owner" id="d_coowner"></div>
+        <div class="fg"><label>Co-owner Number</label><input type="tel" name="co_owner_number" id="d_coowner_number" placeholder="Phone number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)"></div></div>
       <div class="r3">
         <div class="fg"><label>Unit No <span class="req">*</span></label><input type="text" name="unit_no" id="d_unit" required><div class="err-msg">Required</div></div>
         <div class="fg"><label>Tower No <span class="req">*</span></label><input type="text" name="tower_no" id="d_tower" required><div class="err-msg">Required</div></div>
@@ -68,8 +82,11 @@
       <div class="fg" id="hdWrap" style="display:none"><label>Key Handover Date <span class="req">*</span></label><input type="date" name="key_handover_date" id="hdDate"><div class="err-msg">Required</div></div>
       <div class="r2">
         <div class="fg"><label>Guaranteed Sale Price (in Lakhs) <span class="req">*</span></label><input type="text" name="guaranteed_sale_price" id="gsp" inputmode="decimal" required><div class="err-msg">Required</div></div>
-        <div class="fg"><label>Performance Guarantee (in ₹)</label><input type="number" name="performance_guarantee" id="pgAmt" step="1"></div>
-      </div><hr class="div">
+        <div class="fg"><label>Performance Guarantee (%)</label><input type="text" name="pg_pct" id="pgPct" inputmode="decimal" placeholder="e.g. 1.5" oninput="if(parseFloat(this.value)>100)this.value=100"></div>
+      </div>
+      <div class="fg"><label>Performance Guarantee (in ₹) <span class="req">*</span></label><input type="number" name="performance_guarantee" id="pgAmt" step="1" required><div class="err-msg">Required</div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:2px" id="pgCalcHint"></div></div>
+      <hr class="div">
       <div class="arrow-row"><div class="fg"><label>Initial Period (in days) <span class="req">*</span></label><input type="number" name="initial_period" required><div class="err-msg">Required</div></div>
         <div class="arrow-sym">→</div>
         <div class="fg"><label>Rent Payable (in ₹) <span class="req">*</span></label><input type="number" name="rent_payable_initial_period" id="rip" required><div class="err-msg">Required</div></div></div>
@@ -83,23 +100,48 @@
       <div class="fg"><label>Any Loan? <span class="req">*</span></label>
         <div class="radios"><label><input type="radio" name="has_loan" value="Yes" id="loanYes"><span>Yes</span></label><label><input type="radio" name="has_loan" value="No" id="loanNo"><span>No</span></label></div></div>
       <div id="loanFields" style="display:none">
+        <div class="r2">
+          <div class="fg"><label>Applicant Name <span class="req">*</span></label><input type="text" name="loan_applicant_name" id="loanApplicant"></div>
+          <div class="fg"><label>Co-applicant Name</label><input type="text" name="loan_co_applicant_name" id="loanCoApplicant"></div>
+        </div>
         <label class="na-toggle" style="margin-bottom:10px"><input type="checkbox" id="loanCopy"><span>Same as bank details above</span></label>
         <div id="loanBankFields">
-          <div class="fg"><label>Bank Name</label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
+          <div class="fg"><label>Bank Name <span class="req">*</span></label><select name="bank_name_loan" id="selBankLoan"><option value="">Select bank...</option></select>
             <input type="text" name="bank_name_loan_other" id="bankOther" style="display:none;margin-top:4px"></div>
-          <div class="fg"><label>Loan A/C Number</label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+          <div class="fg"><label>Loan A/C Number <span class="req">*</span></label><input type="text" name="loan_account_number" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'')"></div>
         </div>
-        <div class="fg"><label>Outstanding Loan (in ₹)</label><input type="number" name="outstanding_loan"></div>
-        <div class="fg"><label>Willing to pay loan?</label>
+        <div class="fg"><label>Outstanding Loan (in ₹) <span class="req">*</span></label><input type="number" name="outstanding_loan"></div>
+        <div class="fg"><label>Willing to pay loan? <span class="req">*</span></label>
           <div class="radios"><label><input type="radio" name="loan_pay_willingness" value="Yes"><span>Yes</span></label><label><input type="radio" name="loan_pay_willingness" value="No"><span>No</span></label></div></div>
       </div>
     </div>
 
-    <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available</div>
+    <div class="card" style="padding-bottom:16px"><div class="card-t">Documents Available <span class="req">*</span></div>
       <div class="fg" style="margin-bottom:0"><div id="docsSelect"></div></div>
       <div class="fg" id="otherDocWrap" style="display:none;margin-top:8px"><label>Specify Other Documents</label><input type="text" name="other_documents_text" id="otherDocText"></div>
-      <div class="fg" style="margin-top:10px"><label>Remarks to be printed in form</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
-      <div class="fg" style="margin-top:6px"><label>Remarks Internal</label><textarea name="token_remarks" rows="2"></textarea></div></div>
+      <div class="fg" style="margin-top:10px"><label>Remarks (This will be PRINTED on PDF)</label><textarea name="token_remarks_printed" rows="2"></textarea></div>
+      <div class="fg" style="margin-top:6px"><label>Remarks (For internal team reference)</label><textarea name="token_remarks" rows="2"></textarea></div></div>
+
+    <div class="card"><div class="card-t">Owner Documents Upload</div>
+      <div class="owner-uploads" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div class="pu-item" id="pu_ownerAadhaarFront" onclick="document.getElementById('fi_owner_aadhaar_front').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Front</div>
+          <input type="file" id="fi_owner_aadhaar_front" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_front')">
+        </div>
+        <div class="pu-item" id="pu_ownerAadhaarBack" onclick="document.getElementById('fi_owner_aadhaar_back').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Aadhaar Card Back</div>
+          <input type="file" id="fi_owner_aadhaar_back" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_aadhaar_back')">
+        </div>
+        <div class="pu-item" id="pu_ownerPan" onclick="document.getElementById('fi_owner_pan').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">PAN Card</div>
+          <input type="file" id="fi_owner_pan" accept="image/*,.pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_pan')">
+        </div>
+        <div class="pu-item" id="pu_ownerPropDoc" onclick="document.getElementById('fi_owner_property_doc').click()">
+          <div class="pu-icon">📄</div><div class="pu-label">Property Ownership Doc (PDF)</div>
+          <input type="file" id="fi_owner_property_doc" accept=".pdf,application/pdf" style="display:none" onchange="uploadOwnerDoc(this,'owner_property_doc')">
+        </div>
+      </div>
+    </div>
 
     <div class="btn-row">
       <button type="button" class="btn btn-amb" id="draftBtn">Save Draft</button>
@@ -113,7 +155,7 @@
 </div>
 
 <div class="confirm-overlay" id="ownerCheckModal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:998;display:none;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--sf);border-radius:12px;width:100%;max-width:380px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden">
+  <div style="background:var(--sf);border-radius:12px;width:100%;max-width:480px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden">
     <div style="padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--bg)">
       <div style="font-size:14px;font-weight:700">Confirm Owner Name</div>
       <div style="font-size:11px;color:var(--tx3);margin-top:2px">Is this the property owner or a channel partner (CP)?</div>
@@ -122,6 +164,16 @@
       <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:12px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#92400e;font-weight:600;margin-bottom:4px">Current Name</div>
         <div style="font-size:16px;font-weight:700;color:var(--tx)" id="ownerCheckName"></div>
+      </div>
+      <div id="coOwnerWrap" style="display:none;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--tx2)">
+          <input type="checkbox" id="addCoOwnerChk" onchange="document.getElementById('coOwnerFields').style.display=this.checked?'block':'none'">
+          Add Co-owner Information
+        </label>
+        <div id="coOwnerFields" style="display:none;margin-top:8px">
+          <input type="text" id="coOwnerName" placeholder="Co-owner Full Name" style="width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px">
+          <input type="tel" id="coOwnerPhone" placeholder="Co-owner Phone (10 digits)" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" style="width:100%;font-size:14px;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--r);font-family:var(--mono)">
+        </div>
       </div>
       <div id="ownerEditWrap" style="display:none;margin-bottom:12px">
         <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:600">Enter owner details:</div>
@@ -151,6 +203,28 @@
 <script src="/js/shared.js"></script>
 <script>
 let docsMsel,currentUid,chequeUploader,allOpts,loadedData=null;
+const ownerDocUrls={owner_pan:'',owner_aadhaar_front:'',owner_aadhaar_back:'',owner_property_doc:''};
+const OWNER_DOC_COL={owner_pan:'owner_pan_url',owner_aadhaar_front:'owner_aadhaar_front_url',owner_aadhaar_back:'owner_aadhaar_back_url',owner_property_doc:'owner_property_doc_url'};
+const OWNER_DOC_ITEM={owner_pan:'pu_ownerPan',owner_aadhaar_front:'pu_ownerAadhaarFront',owner_aadhaar_back:'pu_ownerAadhaarBack',owner_property_doc:'pu_ownerPropDoc'};
+const OWNER_DOC_LABEL={owner_pan:'PAN Card',owner_aadhaar_front:'Aadhaar Front',owner_aadhaar_back:'Aadhaar Back',owner_property_doc:'Property Ownership Doc'};
+let ownerCloudCfg=null;
+fetch(`${API}/api/config/cloudinary`).then(r=>r.json()).then(c=>ownerCloudCfg=c).catch(()=>{});
+async function uploadOwnerDoc(input,key){
+  if(!input.files.length)return;if(!ownerCloudCfg){toast('Upload not ready','warn');return}
+  const file=input.files[0];if(file.size>10*1024*1024){toast('File exceeds 10MB','err');return}
+  const item=document.getElementById(OWNER_DOC_ITEM[key]);item.querySelector('.pu-label').textContent='Uploading...';
+  try{
+    const ownerName=(document.getElementById('d_owner')?.value||loadedData?.owner_broker_name||'owner').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+    const fd=new FormData();fd.append('file',file);fd.append('upload_preset',ownerCloudCfg.uploadPreset);fd.append('folder',`owner-docs/${ownerName}`);
+    const r=await fetch(`https://api.cloudinary.com/v1_1/${ownerCloudCfg.cloudName}/auto/upload`,{method:'POST',body:fd});
+    const d=await r.json();if(!d.secure_url)throw new Error('Upload failed');
+    ownerDocUrls[key]=d.secure_url;item.classList.add('uploaded');item.classList.remove('missing');
+    item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+    let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+    link.href=d.secure_url;toast('Uploaded','ok');
+  }catch(e){toast('Upload failed','err');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]}
+  input.value='';
+}
 function autoFillBank(ifsc){const bank=bankFromIFSC(ifsc);if(bank){const sel=document.getElementById('ocrBank');for(const o of sel.options){if(o.value===bank){sel.value=bank;return}}}}
 
 function fmtDt(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
@@ -187,14 +261,35 @@ document.addEventListener('DOMContentLoaded',async()=>{
     bankSel.addEventListener('change',()=>{document.getElementById('bankOther').style.display=bankSel.value==='Others'?'block':'none'});
     document.getElementById('selOcc').addEventListener('change',e=>{const w=document.getElementById('hdWrap'),d=document.getElementById('hdDate');
       if(e.target.value==='Tenant'){w.style.display='block';d.required=true}else{w.style.display='none';d.required=false;d.value=''}});
-    // PG is now direct number, no percentage calculation needed
+    // PG bidirectional: % ↔ ₹
+    const gspEl=document.getElementById('gsp'),pgPct=document.getElementById('pgPct'),pgAmt=document.getElementById('pgAmt'),pgHint=document.getElementById('pgCalcHint');
+    let pgLock=false;
+    function calcPGFromPct(){if(pgLock)return;pgLock=true;
+      const g=parseFloat(String(gspEl.value).replace(/,/g,''))||0;const p=parseFloat(String(pgPct.value).replace(/,/g,''))||0;
+      if(g>0&&p>0){const amt=Math.round(g*100000*p/100);pgAmt.value=amt;pgHint.textContent=`${p}% of ₹${(g*100000).toLocaleString('en-IN')} = ₹${amt.toLocaleString('en-IN')}`}
+      else{pgHint.textContent=''}
+      pgLock=false}
+    function calcPctFromPG(){if(pgLock)return;pgLock=true;
+      const g=parseFloat(String(gspEl.value).replace(/,/g,''))||0;const a=parseFloat(String(pgAmt.value).replace(/,/g,''))||0;
+      if(g>0&&a>0){const pct=Math.round(a/(g*100000)*100*1000)/1000;pgPct.value=pct;pgHint.textContent=`₹${a.toLocaleString('en-IN')} = ${pct}% of ₹${(g*100000).toLocaleString('en-IN')}`}
+      else{pgHint.textContent=''}
+      pgLock=false}
+    pgPct.addEventListener('input',calcPGFromPct);
+    gspEl.addEventListener('input',()=>{if(pgPct.value)calcPGFromPct();else if(pgAmt.value)calcPctFromPG()});
+    pgAmt.addEventListener('input',calcPctFromPG);
     document.getElementById('rip').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');this.required=false}});
     document.getElementById('rgp').addEventListener('input',function(){if(this.value==='0'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');this.required=false}});
     // Loan Yes/No toggle
     document.querySelectorAll('input[name="has_loan"]').forEach(r=>{
       r.addEventListener('change',function(){
         document.getElementById('loanFields').style.display=this.value==='Yes'?'block':'none';
+        if(this.value==='Yes'){
+          if(!document.getElementById('loanApplicant').value)document.getElementById('loanApplicant').value=document.getElementById('d_owner').value||'';
+          if(!document.getElementById('loanCoApplicant').value)document.getElementById('loanCoApplicant').value=document.getElementById('d_coowner').value||'';
+        }
         if(this.value==='No'){
+          document.getElementById('loanApplicant').value='';
+          document.getElementById('loanCoApplicant').value='';
           document.querySelector('[name="outstanding_loan"]').value='';
           document.querySelector('[name="loan_account_number"]').value='';
           document.getElementById('selBankLoan').value='';
@@ -241,6 +336,7 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     document.getElementById('d_soc').value=d.society_name||'';document.getElementById('d_loc').value=d.locality||'';
     document.getElementById('d_owner').value=d.owner_broker_name||'';document.getElementById('d_phone').value=d.contact_no||'';
     document.getElementById('d_coowner').value=d.co_owner||'';
+    document.getElementById('d_coowner_number').value=d.co_owner_number||'';
     document.getElementById('d_unit').value=d.unit_no||'';document.getElementById('d_tower').value=d.tower_no||'';
     document.getElementById('d_floor').value=d.floor??'';document.getElementById('d_area').value=d.area_sqft??'';
     document.getElementById('d_cfg').value=configDisplay(d.configuration,d.extra_area);
@@ -254,7 +350,8 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     sv('registry_status',d.registry_status);sv('occupancy_status',d.occupancy_status);
     if(d.occupancy_status==='Tenant'){document.getElementById('hdWrap').style.display='block';document.getElementById('hdDate').required=true;if(d.key_handover_date)sv('key_handover_date',d.key_handover_date.split('T')[0])}
     sv('guaranteed_sale_price',d.guaranteed_sale_price);
-    if(d.performance_guarantee)document.getElementById('pgAmt').value=d.performance_guarantee;
+    if(d.performance_guarantee){document.getElementById('pgAmt').value=d.performance_guarantee;
+      if(d.guaranteed_sale_price){const pct=Math.round(d.performance_guarantee/(d.guaranteed_sale_price*100000)*100*1000)/1000;document.getElementById('pgPct').value=pct;document.getElementById('pgCalcHint').textContent=`₹${Number(d.performance_guarantee).toLocaleString('en-IN')} = ${pct}% of ₹${(d.guaranteed_sale_price*100000).toLocaleString('en-IN')}`}}
     sv('initial_period',d.initial_period);sv('grace_period',d.grace_period);
     if(d.rent_payable_initial_period&&String(d.rent_payable_initial_period).toUpperCase()==='N/A'){document.getElementById('rip_na').checked=true;toggleNA('rip','No rent');document.getElementById('rip').required=false}else sv('rent_payable_initial_period',d.rent_payable_initial_period);
     if(d.rent_payable_grace_period&&String(d.rent_payable_grace_period).toUpperCase()==='N/A'){document.getElementById('rgp_na').checked=true;toggleNA('rgp','No rent');document.getElementById('rgp').required=false}else sv('rent_payable_grace_period',d.rent_payable_grace_period);
@@ -263,11 +360,21 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
     const loanRadio=document.querySelector(`input[name="has_loan"][value="${hasLoan}"]`);
     if(loanRadio){loanRadio.checked=true;document.getElementById('loanFields').style.display=hasLoan==='Yes'?'block':'none'}
     if(d.bank_name_loan){const bs=document.getElementById('selBankLoan');bs.value=d.bank_name_loan;if(d.bank_name_loan==='Others')document.getElementById('bankOther').style.display='block'}
+    document.getElementById('loanApplicant').value=d.loan_applicant_name||d.owner_broker_name||'';
+    document.getElementById('loanCoApplicant').value=d.loan_co_applicant_name||d.co_owner||'';
     sv('outstanding_loan',d.outstanding_loan);sv('loan_account_number',d.loan_account_number);
     sr('loan_pay_willingness',d.loan_pay_willingness);
     sv('token_remarks',d.token_remarks);
     sv('token_remarks_printed',d.token_remarks_printed);
     if(d.documents_available){try{docsMsel.setSelected(typeof d.documents_available==='string'?JSON.parse(d.documents_available):d.documents_available)}catch(e){}}
+    // Prefill owner document uploads
+    for(const[key,col]of Object.entries(OWNER_DOC_COL)){
+      ownerDocUrls[key]=d[col]||'';
+      const item=document.getElementById(OWNER_DOC_ITEM[key]);
+      if(d[col]){item.classList.add('uploaded');item.querySelector('.pu-label').textContent=OWNER_DOC_LABEL[key]+' ✓';
+        let link=item.querySelector('.pu-link');if(!link){link=document.createElement('a');link.className='pu-link';link.target='_blank';link.textContent='View';link.onclick=e=>e.stopPropagation();item.appendChild(link)}
+        link.href=d[col]}
+    }
     document.getElementById('tokenForm').style.display='block';
     document.getElementById('pdfBtn').disabled=!d.token_submitted_at;
     document.getElementById('emailBtn').disabled=!d.token_submitted_at;
@@ -276,21 +383,37 @@ async function loadData(){const uid=document.getElementById('selUid').value;if(!
 function collectBody(){const fd=new FormData(document.getElementById('tokenForm'));const body=Object.fromEntries(fd.entries());
   body.loan_pay_willingness=getRadio('loan_pay_willingness');
   body.has_loan=getRadio('has_loan')||'No';
-  if(body.has_loan==='No'){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness=''}
+  if(body.has_loan==='No'){body.outstanding_loan='';body.bank_name_loan='';body.loan_account_number='';body.loan_pay_willingness='';body.loan_applicant_name='';body.loan_co_applicant_name=''}
   body.documents_available=docsMsel.getSelected();
   if(body.bank_name_loan==='Others')body.bank_name_loan=document.getElementById('bankOther').value||'Others';
   if(document.getElementById('rip').dataset.na==='1')body.rent_payable_initial_period='N/A';
   if(document.getElementById('rgp').dataset.na==='1')body.rent_payable_grace_period='N/A';
-  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner'];
+  const skipKeys=['documents_available','uid','cheque_image_url','cheque_bank_name','cheque_ifsc','registry_status','occupancy_status','bank_name_loan','loan_pay_willingness','token_remarks','token_remarks_printed','token_requested_by','rent_payable_initial_period','rent_payable_grace_period','key_handover_date','bank_name_loan_other','other_documents_text','unit_no','tower_no','floor','area_sqft','demand_price','has_loan','co_owner','co_owner_number','pg_pct','loan_applicant_name','loan_co_applicant_name'];
   for(const k of Object.keys(body)){if(typeof body[k]==='string'&&!skipKeys.includes(k))body[k]=body[k].replace(/,/g,'')}
-  body.performance_guarantee=parseFloat(body.performance_guarantee)||null;
+  body.performance_guarantee=parseFloat(body.performance_guarantee)||null;delete body.pg_pct;
+  for(const[key,col]of Object.entries(OWNER_DOC_COL)){body[col]=ownerDocUrls[key]||null}
   return body}
 document.getElementById('draftBtn').addEventListener('click',()=>{const body=collectBody();body.is_draft=true;
   submitBtn(document.getElementById('draftBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);toast('Draft saved!','ok')})});
 document.getElementById('submitBtn').addEventListener('click',()=>{
   const{valid,missing}=validateForm('tokenForm');if(!valid){toast(`Missing: ${missing.slice(0,3).join(', ')}`,'err');return}
+  if(!getRadio('has_loan')){toast('Select Any Loan?','err');return}
+  if(getRadio('has_loan')==='Yes'){
+    if(!document.getElementById('loanApplicant').value.trim()){toast('Applicant Name required','err');return}
+    if(!document.getElementById('selBankLoan').value){toast('Loan Bank Name required','err');return}
+    if(!document.querySelector('[name="loan_account_number"]').value.trim()){toast('Loan A/C Number required','err');return}
+    if(!document.querySelector('[name="outstanding_loan"]').value){toast('Outstanding Loan required','err');return}
+    if(!getRadio('loan_pay_willingness')){toast('Select Willing to pay loan','err');return}
+  }
   const docs=JSON.parse(docsMsel.getSelected()||'[]');if(!docs.length){toast('Select at least one document','err');return}
+  // Validate owner documents
+  const missingOwnerDocs=[];
+  Object.values(OWNER_DOC_ITEM).forEach(id=>document.getElementById(id).classList.remove('missing'));
+  for(const[key,label]of Object.entries(OWNER_DOC_LABEL)){
+    if(!ownerDocUrls[key]){missingOwnerDocs.push(label);document.getElementById(OWNER_DOC_ITEM[key]).classList.add('missing')}
+  }
+  if(missingOwnerDocs.length){toast(`Upload required: ${missingOwnerDocs.join(', ')}`,'err');return}
   const body=collectBody();body.is_draft=false;
   submitBtn(document.getElementById('submitBtn'),async()=>{const r=await fetch(`${API}/api/token-request/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const res=await r.json();if(!r.ok)throw new Error(res.error);document.getElementById('pdfBtn').disabled=false;document.getElementById('emailBtn').disabled=false;toast('Submitted successfully!','ok',5000)})});
@@ -306,23 +429,47 @@ document.getElementById('emailBtn').addEventListener('click',()=>{
   const ownerName=document.getElementById('d_owner').value||loadedData?.owner_broker_name||'';
   document.getElementById('ownerCheckName').textContent=ownerName;
   document.getElementById('ownerEditWrap').style.display='none';
+  document.getElementById('coOwnerWrap').style.display='none';
+  document.getElementById('addCoOwnerChk').checked=false;
+  document.getElementById('coOwnerFields').style.display='none';
+  document.getElementById('coOwnerName').value='';
+  document.getElementById('coOwnerPhone').value='';
   document.getElementById('ownerBtnRow').style.display='flex';
+  document.getElementById('ownerBtnRow').innerHTML='<button type="button" class="btn btn-out" id="ownerCpBtn" style="flex:1">This is CP</button><button type="button" class="btn btn-dark" id="ownerOkBtn" style="flex:1">This is Owner ✓</button>';
   document.getElementById('ownerSaveRow').style.display='none';
   document.getElementById('ownerCheckModal').style.display='flex';
 });
-document.getElementById('ownerOkBtn').addEventListener('click',()=>{
-  document.getElementById('ownerCheckModal').style.display='none';
-  if(!confirm('Send token request email?'))return;
-  sendEmail();
-});
-document.getElementById('ownerCpBtn').addEventListener('click',()=>{
-  document.getElementById('ownerEditWrap').style.display='block';
-  document.getElementById('ownerBtnRow').style.display='none';
-  document.getElementById('ownerSaveRow').style.display='flex';
-  document.getElementById('ownerFirst').value='';
-  document.getElementById('ownerLast').value='';
-  document.getElementById('ownerPhone').value='';
-  document.getElementById('ownerFirst').focus();
+document.getElementById('ownerBtnRow').addEventListener('click',(e)=>{
+  const btn=e.target.closest('button');if(!btn)return;
+  if(btn.id==='ownerOkBtn'){
+    document.getElementById('coOwnerWrap').style.display='block';
+    document.getElementById('ownerBtnRow').innerHTML='<button type="button" class="btn btn-dark" id="ownerConfirmBtn" style="flex:1">Confirm & Send Email</button>';
+    return;
+  }
+  if(btn.id==='ownerConfirmBtn'){
+    if(document.getElementById('addCoOwnerChk').checked){
+      const coName=document.getElementById('coOwnerName').value.trim();
+      if(!coName){toast('Enter co-owner name','err');return}
+      const coPhone=document.getElementById('coOwnerPhone').value.trim();
+      if(coPhone&&(coPhone.length!==10||coPhone[0]==='0')){toast('Enter valid 10-digit phone','err');return}
+      document.getElementById('d_coowner').value=coName;
+    }
+    document.getElementById('ownerCheckModal').style.display='none';
+    if(!confirm('Send token request email?'))return;
+    sendEmail();
+    return;
+  }
+  if(btn.id==='ownerCpBtn'){
+    window._cpNameBefore=document.getElementById('d_owner').value;
+    window._cpPhoneBefore=document.getElementById('d_phone').value;
+    document.getElementById('ownerEditWrap').style.display='block';
+    document.getElementById('ownerBtnRow').style.display='none';
+    document.getElementById('ownerSaveRow').style.display='flex';
+    document.getElementById('ownerFirst').value='';
+    document.getElementById('ownerLast').value='';
+    document.getElementById('ownerPhone').value='';
+    document.getElementById('ownerFirst').focus();
+  }
 });
 document.getElementById('ownerBackBtn').addEventListener('click',()=>{
   document.getElementById('ownerEditWrap').style.display='none';
@@ -338,7 +485,7 @@ document.getElementById('ownerSaveBtn').addEventListener('click',async()=>{
   const fullName=[first,last].filter(Boolean).join(' ');
   const btn=document.getElementById('ownerSaveBtn');btn.disabled=true;btn.textContent='Saving...';
   try{
-    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName,contact_no:phone||undefined})});
+    const r=await fetch(`${API}/api/token-request/update-owner/${currentUid}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:first,last_name:last,owner_broker_name:fullName,contact_no:phone||undefined,cp_name:window._cpNameBefore||null,cp_phone:window._cpPhoneBefore||null})});
     const d=await r.json();if(!r.ok)throw new Error(d.error);
     document.getElementById('d_owner').value=fullName;
     if(loadedData)loadedData.owner_broker_name=fullName;

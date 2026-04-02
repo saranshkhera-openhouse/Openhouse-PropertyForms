@@ -27,7 +27,9 @@ module.exports=function(pool){
         grace_period=$14,rent_payable_grace_period=$15,
         outstanding_loan=$16,bank_name_loan=$17,loan_account_number=$18,loan_pay_willingness=$19,
         documents_available=$20,token_remarks=$21,token_is_draft=$22,
-        has_loan=$24,token_remarks_printed=$25,co_owner=$26,
+        has_loan=$24,token_remarks_printed=$25,co_owner=$26,co_owner_number=$32,
+        loan_applicant_name=$33,loan_co_applicant_name=$34,
+        owner_pan_url=$35,owner_aadhaar_front_url=$36,owner_aadhaar_back_url=$37,owner_property_doc_url=$38,
         token_submitted_at=CASE WHEN $22=FALSE THEN NOW() ELSE token_submitted_at END,updated_at=NOW()
         WHERE uid=$23`,
         [d.token_requested_by||null,parseFloat(d.token_amount_requested)||null,
@@ -39,17 +41,19 @@ module.exports=function(pool){
          parseFloat(d.outstanding_loan)||null,d.bank_name_loan||null,d.loan_account_number||null,d.loan_pay_willingness||null,
          d.documents_available||'[]',d.token_remarks||null,isDraft,d.uid,
          d.has_loan||'No',d.token_remarks_printed||null,d.co_owner||null,
-         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null]);
+         d.unit_no||null,d.tower_no||null,parseInt(d.floor)||null,parseFloat(d.area_sqft)||null,parseFloat(d.demand_price)||null,
+         d.co_owner_number||null,d.loan_applicant_name||null,d.loan_co_applicant_name||null,
+         d.owner_pan_url||null,d.owner_aadhaar_front_url||null,d.owner_aadhaar_back_url||null,d.owner_property_doc_url||null]);
       res.json({success:true,uid:d.uid,draft:isDraft});
     }catch(e){console.error('TokenReq:',e);res.status(500).json({error:e.message})}
   });
   // Update owner name (CP → Owner correction)
   router.post('/update-owner/:uid',async(req,res)=>{
     try{
-      const{first_name,last_name,owner_broker_name,contact_no}=req.body;
+      const{first_name,last_name,owner_broker_name,contact_no,cp_name,cp_phone}=req.body;
       if(!owner_broker_name)return res.status(400).json({error:'Name required'});
-      await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,contact_no=COALESCE($4,contact_no),updated_at=NOW() WHERE uid=$5',
-        [first_name||null,last_name||null,owner_broker_name,contact_no||null,req.params.uid]);
+      await pool.query('UPDATE properties SET first_name=$1,last_name=$2,owner_broker_name=$3,contact_no=COALESCE($4,contact_no),cp_name=COALESCE($5,cp_name),cp_phone=COALESCE($6,cp_phone),updated_at=NOW() WHERE uid=$7',
+        [first_name||null,last_name||null,owner_broker_name,contact_no||null,cp_name||null,cp_phone||null,req.params.uid]);
       res.json({success:true});
     }catch(e){console.error('UpdateOwner:',e);res.status(500).json({error:e.message})}
   });

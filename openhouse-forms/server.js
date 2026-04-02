@@ -71,15 +71,17 @@ app.use('/api/schedule', isAuthenticated, hasFormAccess, require('./routes/sched
 app.use('/api/visit', isAuthenticated, hasFormAccess, require('./routes/visit')(pool));
 app.use('/api/token-request', isAuthenticated, hasFormAccess, require('./routes/token-request')(pool));
 app.use('/api/token-deal', isAuthenticated, hasFormAccess, require('./routes/token-deal')(pool));
+app.use('/api/ama-details', isAuthenticated, hasFormAccess, require('./routes/ama-details')(pool));
 app.use('/api/final', isAuthenticated, hasFormAccess, require('./routes/final')(pool));
 app.use('/api/listing', isAuthenticated, hasFormAccess, require('./routes/listing')(pool));
+app.use('/api/cp-bill', isAuthenticated, hasFormAccess, require('./routes/cp-bill')(pool));
 app.use('/api/cp-inventory', isAuthenticated, require('./routes/cp-inventory')(pool));
 app.use('/api/ocr', isAuthenticated, require('./routes/ocr')());
 
 app.get('/api/properties', isAuthenticated, isAdmin, async(req,res)=>{
   try{const vis=visibilityFilter(req.user);const{rows}=await pool.query(`SELECT uid,city,locality,society_name,unit_no,tower_no,configuration,owner_broker_name,first_name,last_name,contact_no,
     assigned_by,field_exec,token_requested_by,is_dead,
-    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,final_submitted_at,listing_submitted_at,created_at
+    schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,token_deal_submitted_at,ama_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at,created_at
     FROM properties WHERE TRUE${vis.clause} ORDER BY created_at DESC`,vis.params);res.json(rows)}catch(e){console.error('Properties list error:',e.message);res.status(500).json({error:e.message})}
 });
 
@@ -103,14 +105,24 @@ app.post('/api/admin/property/:uid', isAuthenticated, isAdmin, async(req,res)=>{
       'token_requested_by','token_amount_requested','registry_status','occupancy_status','key_handover_date',
       'guaranteed_sale_price','performance_guarantee','initial_period','rent_payable_initial_period',
       'grace_period','rent_payable_grace_period','outstanding_loan','bank_name_loan','loan_account_number',
-      'loan_pay_willingness','has_loan','token_remarks','token_remarks_printed','inclusions','papers_available',
+      'loan_pay_willingness','has_loan','loan_applicant_name','loan_co_applicant_name','token_remarks','token_remarks_printed','inclusions','papers_available',
       'cheque_bank_name','cheque_account_number','cheque_ifsc',
-      'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference',
+      'deal_token_amount','deal_bank_name','deal_bank_account_number','deal_ifsc_code','deal_transfer_date','deal_neft_reference','owner_email','co_owner_email','co_owner_number','third_owner_email','broker_email',
+      'ama_sanction_url','ama_soa_url','ama_lod_url','ama_pg_non_forfeitable','ama_beta_max_pct','ama_beta_min_pct',
+      'ama_maint_alignment','ama_elec_alignment','ama_special_terms','ama_prop_docs',
       'remaining_amount','bank_name','bank_account_number','ifsc_code','token_transfer_date','neft_reference',
       'listing_asking_price','listing_availability','listing_highlights','listing_description',
+      'super_area','carpet_area',
       'society_age_years','total_units','maintenance_charges','society_move_in_charges','electricity_charges',
       'water_supply','dg_charges','alpha_beta','beta_pct','loan_status','seller_location',
-      'current_occupancy_pct','circle_rate','parking_number','is_dead']);
+      'current_occupancy_pct','circle_rate','parking_number','is_dead',
+      'cp_name','cp_phone','cp_firm','cp_email','deal_type','oh_acquired_model','agreed_brokerage',
+      'deal_value','total_brokerage_amount','to_be_released_now',
+      'pan_front_url','pan_back_url','aadhaar_front_url','aadhaar_back_url',
+      'cp_cancelled_cheque_url','ama_signed_photo_url',
+      'cp_pan_card_url','cp_aadhaar_front_url','cp_aadhaar_back_url','cp_ama_signed_url',
+      'incentive_visit','incentive_owner_meeting','total_cp_amount',
+      'ama_date','owner_pan_url','owner_aadhaar_front_url','owner_aadhaar_back_url','owner_property_doc_url']);
     const sets=[];const vals=[];let i=1;
     for(const[k,v]of Object.entries(d)){
       if(!allowed.has(k))continue;
@@ -133,7 +145,7 @@ app.get('/api/my-properties', isAuthenticated, async(req,res)=>{
       demand_price,source,owner_broker_name,contact_no,assigned_by,field_exec,
       schedule_date,schedule_time,is_dead,
       schedule_submitted_at,visit_submitted_at,token_submitted_at,token_is_draft,
-      token_deal_submitted_at,final_submitted_at,listing_submitted_at
+      token_deal_submitted_at,ama_submitted_at,final_submitted_at,cp_bill_submitted_at,listing_submitted_at
       FROM properties ${baseWhere} ORDER BY created_at DESC`,vis.params);
     res.json(rows)}catch(e){console.error('MyProps error:',e.message);res.status(500).json({error:e.message})}
 });
@@ -143,8 +155,10 @@ app.get('/schedule', ...sendForm('schedule.html'));
 app.get('/visit', ...sendForm('visit.html'));
 app.get('/token-request', ...sendForm('token-request.html'));
 app.get('/token-deal', ...sendForm('token-deal.html'));
+app.get('/ama-details', ...sendForm('ama-details.html'));
 app.get('/final', ...sendForm('final.html'));
 app.get('/listing', ...sendForm('listing.html'));
+app.get('/cp-bill', ...sendForm('cp-bill.html'));
 app.get('/cp-inventory', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/cp-inventory.html')));
 app.get('/admin', isAuthenticated, isAdmin, (_, r) => r.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/my-properties', isAuthenticated, (_, r) => r.sendFile(path.join(__dirname, 'public/my-properties.html')));

@@ -28,7 +28,9 @@ const NAME_TO_PHONE = {
   'Rahool':             '9899546824',
   'Prashant':           '9289500953',
   'Ashish':             '9555666059',
-  'Saransh Khera':      '8595594789'
+  'Saransh Khera':      '8595594789',
+  'Saurabh':            '9174286625',
+  'Akash Teotia':       '9311338205'
 };
 
 // ═══════════════════════════════════════════════════════
@@ -154,7 +156,9 @@ function sendInterakt(phone, templateName, bodyValues) {
 // ═══════════════════════════════════════════════════════
 function fmtDate(d) {
   if (!d) return '-';
-  return new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const dt = d instanceof Date ? d : new Date(d + 'T00:00');
+  if (isNaN(dt)) return '-';
+  return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 function fmtTime(t) {
   if (!t) return '-';
@@ -256,9 +260,38 @@ function notifyVisitCancelled(property, cancelledBy) {
   return broadcastTemplate('visit_cancelled', bodyValues, recipients);
 }
 
+// ═══════════════════════════════════════════════════════
+// AMA DETAILS SUBMITTED — flip to true once template is approved
+// ═══════════════════════════════════════════════════════
+const AMA_WA_ENABLED = true; // Template approved: ama_notification
+
+function notifyAMASubmitted(property) {
+  if (!AMA_WA_ENABLED) { console.log('WA: AMA notification SKIPPED (template not yet approved)'); return Promise.resolve(); }
+  const p = property;
+  // Date of Token from Form 4 (deal_transfer_date)
+  let dateStr = '-';
+  if(p.deal_transfer_date){const dt=new Date(p.deal_transfer_date);dateStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`}
+  const towerUnit = [p.tower_no, p.unit_no].filter(Boolean).join(' - ') || '-';
+  const bdManager = p.assigned_by || '-';
+  const bdPhone = getPhone(bdManager) || '-';
+  const bodyValues = [
+    p.uid || '-',
+    dateStr,
+    p.society_name || '-',
+    towerUnit,
+    bdManager,
+    bdPhone
+  ];
+  // Fixed recipients + BD manager
+  const recipients = ['Saurabh', 'Akash Teotia', 'Ashish', 'Prashant', 'Rahool'];
+  if(bdManager && bdManager!=='-') recipients.push(bdManager);
+  console.log(`WA: ama_notification | UID: ${p.uid} | To: ${recipients.join(', ')}`);
+  return broadcastTemplate('ama_notification', bodyValues, recipients);
+}
+
 module.exports = {
   sendInterakt, broadcastTemplate, getRecipients,
   notifyVisitScheduled, notifyVisitCompleted, notifyTokenRequest,
-  notifyVisitReassigned, notifyVisitCancelled,
+  notifyVisitReassigned, notifyVisitCancelled, notifyAMASubmitted,
   NAME_TO_PHONE, TOP_MANAGERS, MID_MANAGERS
 };
