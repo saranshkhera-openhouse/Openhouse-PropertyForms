@@ -46,7 +46,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
 
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Token Payment Receipt – ${esc(p.uid)}</title>
+<title>– ${esc(p.uid)}</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -119,11 +119,11 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   <div class="p1-body">
   <div class="header">
     <div class="brand"><img src="${logoUrl}" alt="Openhouse" style="height:36px"><span class="brand-name"></span></div>
-    <div class="header-right"><div class="receipt-tag">Token Payment Receipt</div><div class="receipt-date">Generated: ${today}</div></div>
+    <div class="header-right"><div class="receipt-tag"></div><div class="receipt-date">Generated: ${today}</div></div>
   </div>
   <div class="greeting-strip">
     <div class="greeting-left"><div class="hi">Hello, <strong>${esc(firstName)}</strong></div><div class="sub">Here are the agreed deal terms for your property.</div></div>
-    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Performance Guarantee</div></div>`:''}
+    ${p.performance_guarantee?`<div class="guarantee-pill"><div class="gv">${fmtPG(p.performance_guarantee)}</div><div class="gl">Total Deposit</div></div>`:''}
     ${p.guaranteed_sale_price?`<div class="price-block"><div class="price-label">Guaranteed Sale Price</div><div class="price-val">${fmtLakhs(p.guaranteed_sale_price)}</div></div>`:''}
   </div>
   <div class="section-label">Seller Details</div>
@@ -188,7 +188,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
   </div><div class="footer">
     <div><div class="footer-brand">Avano Technologies Private Limited</div>
       <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
-    <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+    <div class="footer-note"><br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
   </div>
   </div><div class="page-2-content" style="page-break-before:always">
     <div class="p2-body">
@@ -205,7 +205,7 @@ function generateReceiptHTML(p, mode='deal', baseUrl=''){
     <div class="footer">
       <div><div class="footer-brand">Avano Technologies Private Limited</div>
         <div class="footer-cin">CIN: U68200HR2024PTC123116 | VentureX, Unit No. 202 &amp; 202A, Silverton Tower, Sector 50, Golf Course Extension Road, Gurugram 122018</div></div>
-      <div class="footer-note">Token Receipt<br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
+      <div class="footer-note"><br><a href="https://www.openhouse.in" style="color:var(--muted);text-decoration:none">www.openhouse.in</a></div>
     </div>
   </div></div></body></html>`;
 }
